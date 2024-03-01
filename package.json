@@ -1,8 +1,8 @@
 {
-  "name": "@openzeppelin/merkle-tree",
+  "name": "merkle-tree-poc",
   "version": "1.0.5",
-  "description": "Utilities to work with merkle trees",
-  "repository": "github:OpenZeppelin/merkle-tree",
+  "description": "Utilities to work with merkle tree (fork from OpenZeppelin)",
+  "repository": "github:GeorgeRushton/merkle-tree-poc",
   "main": "dist/index.js",
   "scripts": {
     "prepublishOnly": "npm run clean",
@@ -18,7 +18,7 @@
     "!**/*.test.*"
   ],
   "keywords": [],
-  "author": "Francisco Giordano <fg@frang.io>",
+  "author": "",
   "license": "MIT",
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",
