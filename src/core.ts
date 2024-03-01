@@ -2,6 +2,7 @@ import { keccak256 } from 'ethereum-cryptography/keccak';
 import { concatBytes, bytesToHex, equalsBytes } from 'ethereum-cryptography/utils';
 import { Bytes, compareBytes } from './bytes';
 import { throwError } from './utils/throw-error';
+import { StandardMerkleTree, standardLeafHash } from './standard';
 
 const hashPair = (a: Bytes, b: Bytes) => keccak256(concatBytes(...[a, b].sort(compareBytes)));
 
@@ -21,7 +22,7 @@ const checkLeafNode        = (tree: unknown[], i: number) => void (isLeafNode(tr
 const checkValidMerkleNode = (node: Bytes)                => void (isValidMerkleNode(node) || throwError('Merkle tree nodes must be Uint8Array of length 32'));
 
 export function makeMerkleTree(leaves: Bytes[]): Bytes[] {
-  leaves.forEach(checkValidMerkleNode);
+  // leaves.forEach(checkValidMerkleNode);
 
   if (leaves.length === 0) {
     throw new Error('Expected non-zero number of leaves');
@@ -41,6 +42,55 @@ export function makeMerkleTree(leaves: Bytes[]): Bytes[] {
 
   return tree;
 }
+
+export function updateMerkleTree(currentTreeObj: any, updateIndices: any, newLeavesUnhashed: any): {updatedTree: any, updatedValues: any}{
+
+    const tree = currentTreeObj.tree
+    const values = currentTreeObj.values 
+
+    let leafEncoding = currentTreeObj.leafEncoding
+
+    const numberOfLeaves = currentTreeObj.values.length;
+    const numberOfLevels = Math.ceil(Math.log2(numberOfLeaves));
+
+    for (let i=0; i < updateIndices.length; i++) {
+        let index = updateIndices[i]
+        values[index].value = newLeavesUnhashed[i]
+    }
+
+    var parentIndices = []
+    for (let j=0; j <= numberOfLevels; j++) {
+        
+        var currentLevelIndices = []
+        if (j == 0) {
+            currentLevelIndices = updateIndices.map((v:any, i: any) => {return tree.length - 1 - v})
+        }
+        else {
+            currentLevelIndices = Array.from(new Set(parentIndices))
+        }
+        parentIndices = []
+
+        for (let i=0; i < currentLevelIndices.length; i++) {
+            let index = currentLevelIndices[i]
+    
+            if (j == numberOfLevels) {
+                tree[index] = hashPair(tree[leftChildIndex(index)], tree[rightChildIndex(index)]);
+            } else {
+                let _siblingIndex = siblingIndex(index)
+                let _parentIndex = parentIndex(index)
+                parentIndices.push(_parentIndex)
+                if (j == 0) {
+                    tree[index] = standardLeafHash(newLeavesUnhashed[i], leafEncoding)
+                } else {
+                    tree[index] = hashPair(tree[leftChildIndex(index)], tree[rightChildIndex(index)]);
+                }
+            }
+        }
+    }
+
+    return { updatedTree: tree, updatedValues: values };
+}
+
 
 export function getProof(tree: Bytes[], index: number): Bytes[] {
   checkLeafNode(tree, index);
